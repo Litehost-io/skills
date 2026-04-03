@@ -9,6 +9,10 @@ PATCH /v1/projects/{projectId}
 Content-Type: application/json
 ```
 
+## Paid plan required
+
+This endpoint is NOT available on the free tier. If the user is on the `free` plan, the API returns `403 FREE_TIER_RESTRICTED`. Direct them to upgrade at https://litehost.io/dashboard.
+
 ## When to use
 
 Use this when the user wants to change project settings: title, slug, visibility, password, domain, SEO fields, expiry, analytics, or workspace assignment.
@@ -85,6 +89,7 @@ curl -X PATCH https://connect.litehost.io/v1/projects/{projectId} \
 | Status | Code | Action |
 |---|---|---|
 | 401 | — | Follow `utils/auth.md`. |
+| 403 | `FREE_TIER_RESTRICTED` | Requires paid plan. Tell user to upgrade at https://litehost.io/dashboard. |
 | 404 | — | Project not found. List projects and ask user to pick. |
 | 409 | — | Slug already taken. Ask user for a different slug and retry. |
 | 422 | — | Validation failed. Check field values against the parameter table and retry. |

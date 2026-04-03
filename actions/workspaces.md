@@ -2,6 +2,8 @@
 
 Create and manage workspaces to organize projects into groups.
 
+**Paid plan required.** All workspace endpoints return `403 FREE_TIER_RESTRICTED` for free-tier users.
+
 ---
 
 ## List Workspaces
@@ -109,5 +111,6 @@ curl -X PATCH https://connect.litehost.io/v1/projects/{projectId} \
 | Status | Action |
 |---|---|
 | 401 | Follow `utils/auth.md`. |
+| 403 | Free-tier restricted. Requires paid plan. Tell user to upgrade at https://litehost.io/dashboard. |
 | 404 | Workspace not found. List workspaces to verify the ID. |
 | 422 | Validation failed. Check name is 1–255 chars. |

@@ -4,7 +4,7 @@ description: >
   Deploy, manage, and update projects on litehost.io via the Connect API.
   Activate when the user asks to deploy, host, publish, upload, update, list,
   delete, archive, or manage any web project, site, file, or domain on Litehost.
-  Also activate for quota checks, workspace management, and custom domain assignment.
+  Also activate for sign-in, quota checks, workspace management, and custom domain assignment.
 user-invocable: true
 argument-hint: "[file-or-folder]"
 allowed-tools: Bash
@@ -12,7 +12,7 @@ allowed-tools: Bash
 
 # Litehost Connect
 
-Skill version: 2.0.0
+Skill version: 3.0.0
 
 Base URL: `https://connect.litehost.io`
 
@@ -20,13 +20,38 @@ Base URL: `https://connect.litehost.io`
 
 ## Authentication
 
-Read `utils/auth.md` and follow it before making any API call. Never proceed without a valid Bearer token.
+Read `utils/auth.md` and follow it before making any authenticated API call.
+
+Two paths to get an API key:
+1. **Dashboard key** — user generates a permanent key at https://litehost.io/dashboard → Integrations.
+2. **OTP sign-in** — run `actions/otp-sign-in.md` to get a 7-day key via email code. No browser needed.
+
+If the user has no key and no `LITEHOST_API_KEY` env var, use the OTP flow automatically.
 
 ---
 
 ## Quota Gate
 
-Before any operation that **creates** or **restores** a project (`create-project`, `unarchive-project`), call `GET /v1/user` and check quotas. If limits are reached, follow the full flow in `utils/quotas.md`. NEVER skip this step.
+Before any operation that **creates** or **restores** a project (`create-project`, `unarchive-project`, `claim`), call `GET /v1/user` and check quotas. If limits are reached, follow the full flow in `utils/quotas.md`. NEVER skip this step.
+
+---
+
+## Free-Tier Awareness
+
+Many endpoints require a paid plan (starter or higher). If the user is on the free tier and hits a `FREE_TIER_RESTRICTED` error, tell them the feature requires upgrading and link to https://litehost.io/dashboard. See `utils/errors.md` for the full list of restricted endpoints.
+
+Free-tier users CAN:
+- Create projects (`POST /v1/projects`)
+- Upload temp projects (`POST /v1/projects/temp`) — no auth needed
+- Claim temp projects (`POST /v1/projects/claim/{token}`)
+- List projects, get project details, delete projects
+- Use OTP sign-in
+- Check user/plan/quota info
+
+Free-tier users CANNOT:
+- Push new versions, update settings, view deployment history
+- Archive or unarchive projects
+- Use domains or workspaces
 
 ---
 
@@ -36,6 +61,8 @@ Map the user's intent to exactly one action file. Read that file and execute its
 
 | User says | Action file |
 |---|---|
+| "sign in", "log in", "I don't have an API key", "authenticate" | `actions/otp-sign-in.md` |
+| "quick upload", "just host this temporarily", "preview this" | `actions/temp-project.md` |
 | "deploy this", "host this", "publish this", "upload this" | `actions/create-project.md` |
 | "update my site", "push new version", "redeploy", "replace content" | `actions/replace-project.md` |
 | "rename project", "change slug", "make private", "set password", "update settings", "set SEO", "change title", "set expiry" | `actions/update-project.md` |
@@ -48,6 +75,13 @@ Map the user's intent to exactly one action file. Read that file and execute its
 | "list domains", "show domains", "assign domain", "remove domain", "custom domain" | `actions/domains.md` |
 | "list workspaces", "create workspace", "rename workspace", "delete workspace", "organize projects" | `actions/workspaces.md` |
 | "check my plan", "how much space do I have", "check quota", "usage" | `actions/get-user.md` |
+
+### Deploy without auth — fast path
+
+If the user wants to deploy but has no API key and wants the fastest path:
+1. Use `actions/temp-project.md` to upload instantly (no auth).
+2. Offer to claim the project permanently.
+3. If they want to claim, run `actions/otp-sign-in.md` first to get a key, then claim.
 
 ---
 
@@ -77,7 +111,7 @@ When the user provides files to deploy, determine the upload strategy:
 
 ## Output Rules
 
-After every successful create or push-version operation, ALWAYS return:
+After every successful create, temp-upload, or push-version operation, ALWAYS return:
 1. The live project URL
 2. The project ID (for future updates)
 

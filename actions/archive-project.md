@@ -14,6 +14,10 @@ POST /v1/projects/{projectId}/archive
 |---|---|---|---|
 | projectId | uuid | yes | Path parameter. |
 
+## Paid plan required
+
+This endpoint is NOT available on the free tier. If the user is on the `free` plan, the API returns `403 FREE_TIER_RESTRICTED`. Direct them to upgrade at https://litehost.io/dashboard.
+
 ## When to use
 
 - User hit project or storage limits and needs to free space
@@ -43,4 +47,5 @@ curl -X POST https://connect.litehost.io/v1/projects/{projectId}/archive \
 | Status | Action |
 |---|---|
 | 401 | Follow `utils/auth.md`. |
+| 403 | Free-tier restricted. Requires paid plan. Tell user to upgrade. |
 | 404 | Project not found. List projects and ask user to pick. |

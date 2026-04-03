@@ -8,6 +8,10 @@ Retrieve all deployment versions for a project, newest first.
 GET /v1/projects/{projectId}/status
 ```
 
+## Paid plan required
+
+This endpoint is NOT available on the free tier. If the user is on the `free` plan, the API returns `403 FREE_TIER_RESTRICTED`. Direct them to upgrade at https://litehost.io/dashboard.
+
 ## Parameters
 
 | Field | Type | Required | Description |
@@ -52,4 +56,5 @@ curl https://connect.litehost.io/v1/projects/{projectId}/status \
 | Status | Action |
 |---|---|
 | 401 | Follow `utils/auth.md`. |
+| 403 | Free-tier restricted. Requires paid plan. Tell user to upgrade. |
 | 404 | Project not found. Verify the ID or list projects. |

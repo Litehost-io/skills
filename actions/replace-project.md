@@ -9,6 +9,10 @@ PUT /v1/projects/{projectId}
 Content-Type: multipart/form-data
 ```
 
+## Paid plan required
+
+This endpoint is NOT available on the free tier. If the user is on the `free` plan, the API returns `403 FREE_TIER_RESTRICTED`. Direct them to upgrade at https://litehost.io/dashboard.
+
 ## When to use
 
 Use this when the user wants to update the **files** of an existing project (redeploy, push new build, replace content).
@@ -60,6 +64,7 @@ curl -X PUT https://connect.litehost.io/v1/projects/{projectId} \
 |---|---|---|
 | 400 | `ZIP_MULTIPLE_HTML` | Response includes `htmlPaths`. Present paths, ask which is the homepage, retry with `zipIndexHtmlPath`. |
 | 401 | — | Follow `utils/auth.md`. |
+| 403 | `FREE_TIER_RESTRICTED` | Requires paid plan. Tell user to upgrade at https://litehost.io/dashboard. |
 | 404 | — | Project not found. List projects and ask user to pick again. |
 
 ## Output

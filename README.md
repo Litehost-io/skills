@@ -5,24 +5,26 @@ Agent skill for deploying and managing projects on [litehost.io](https://litehos
 ## What's inside
 
 ```
-SKILL.md              ← Entry point: routing table, auth gate, quota gate
+Skill.md                ← Entry point: routing table, auth gate, quota gate
 actions/
-  create-project.md   ← POST   /v1/projects
-  replace-project.md  ← PUT    /v1/projects/{id}        (push new files)
-  update-project.md   ← PATCH  /v1/projects/{id}        (change settings)
-  list-projects.md    ← GET    /v1/projects
-  get-project.md      ← GET    /v1/projects/{id}
+  otp-sign-in.md        ← POST /v1/auth/otp/request + /verify  (keyless auth)
+  temp-project.md       ← POST /v1/projects/temp + /claim       (no auth needed)
+  create-project.md     ← POST /v1/projects
+  replace-project.md    ← PUT  /v1/projects/{id}                (push new files)
+  update-project.md     ← PATCH /v1/projects/{id}               (change settings)
+  list-projects.md      ← GET  /v1/projects
+  get-project.md        ← GET  /v1/projects/{id}
   deployment-history.md ← GET  /v1/projects/{id}/status
-  delete-project.md   ← DELETE /v1/projects/{id}
-  archive-project.md  ← POST   /v1/projects/{id}/archive
-  unarchive-project.md ← POST  /v1/projects/{id}/unarchive
-  domains.md          ← GET    /v1/domains, /v1/domains/{id}, assign/remove
-  workspaces.md       ← CRUD   /v1/workspaces
-  get-user.md         ← GET    /v1/user (plan, quota)
+  delete-project.md     ← DELETE /v1/projects/{id}
+  archive-project.md    ← POST /v1/projects/{id}/archive
+  unarchive-project.md  ← POST /v1/projects/{id}/unarchive
+  domains.md            ← GET  /v1/domains, /v1/domains/{id}, assign/remove
+  workspaces.md         ← CRUD /v1/workspaces
+  get-user.md           ← GET  /v1/user (plan, quota)
 utils/
-  auth.md             ← API key resolution flow
-  errors.md           ← Error code reference + required agent actions
-  quotas.md           ← Limit-reached handling sequence
+  auth.md               ← API key resolution (dashboard keys + OTP)
+  errors.md             ← Error code reference + required agent actions
+  quotas.md             ← Limit-reached handling sequence
 ```
 
 ## Prerequisites
