@@ -29,11 +29,18 @@ utils/
 
 ## Prerequisites
 
-Generate an API key from your [Litehost dashboard → Integrations](https://litehost.io/dashboard) and expose it as an environment variable:
+You need an API key. Two ways to get one:
+
+- **Dashboard** — generate a permanent key at [litehost.io/dashboard → Integrations](https://litehost.io/dashboard).
+- **OTP sign-in** — the skill can authenticate you via email code, no dashboard needed. See `actions/otp-sign-in.md`.
+
+If you already have a key, expose it as an environment variable:
 
 ```bash
 export LITEHOST_API_KEY="lh_live_..."
 ```
+
+No key at all? The skill can still do instant uploads via `POST /v1/projects/temp` (no auth required, 15-min expiry).
 
 ---
 
