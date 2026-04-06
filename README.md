@@ -67,13 +67,15 @@ curl -L https://github.com/Litehost-io/skills/archive/refs/heads/main.tar.gz | t
 mv skills-main ~/.claude/skills/litehost-connect
 ```
 
-**2. Add to your project's `CLAUDE.md`**
+**2. Register with your agent (manual step)**
 
-```markdown
+Open your project's `CLAUDE.md` and add the following snippet yourself:
+
+```
 ## Skills
 
 When the user asks to deploy, host, publish, or manage a project on Litehost,
-read and follow the skill at `~/.claude/skills/litehost-connect/SKILL.md`.
+read and follow the skill at ~/.claude/skills/litehost-connect/Skill.md.
 ```
 
 ### Cursor

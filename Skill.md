@@ -10,11 +10,11 @@ description: >
   Also activate for sign-in, quota checks, workspace management, and custom domain assignment.
 user-invocable: true
 argument-hint: "[file-or-folder]"
-allowed-tools: Bash
 metadata:
   hermes:
     tags: [Hosting, Deployment, Web, Static Sites, API]
     related_skills: []
+    requires_tools: [terminal]
 required_environment_variables:
   - name: LITEHOST_API_KEY
     prompt: "Your Litehost API key (format: lh_live_...)"
