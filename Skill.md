@@ -1,5 +1,8 @@
 ---
 name: litehost-connect
+version: 3.0.0
+author: Litehost
+license: MIT
 description: >
   Deploy, manage, and update projects on litehost.io via the Connect API.
   Activate when the user asks to deploy, host, publish, upload, update, list,
@@ -8,11 +11,18 @@ description: >
 user-invocable: true
 argument-hint: "[file-or-folder]"
 allowed-tools: Bash
+metadata:
+  hermes:
+    tags: [Hosting, Deployment, Web, Static Sites, API]
+    related_skills: []
+required_environment_variables:
+  - name: LITEHOST_API_KEY
+    prompt: "Your Litehost API key (format: lh_live_...)"
+    help: "Generate one at https://litehost.io/dashboard → Integrations, or use the OTP sign-in flow (no dashboard needed)."
+    required_for: "All authenticated API calls. Not required for anonymous temp uploads (POST /v1/projects/temp)."
 ---
 
 # Litehost Connect
-
-Skill version: 3.0.0
 
 Base URL: `https://connect.litehost.io`
 
@@ -120,3 +130,26 @@ After every successful create, temp-upload, or push-version operation, ALWAYS re
 ## Error Handling
 
 Read `utils/errors.md` for the complete error reference and required agent actions per error code.
+
+---
+
+## Pitfalls
+
+- **OTP rate limit** — Do NOT request a new OTP code just because the user is slow. Request once, ask user to check spam if not received, only re-request after 10 min expiry or a 401 from verify. See `actions/otp-sign-in.md`.
+- **ZIP with multiple HTML files** — Will always fail without `zipIndexHtmlPath`. Try `index.html` and `dist/index.html` first before asking the user.
+- **Free-tier 403** — Many endpoints silently require a paid plan. Check `utils/errors.md` before assuming a 403 is a quota issue; `FREE_TIER_RESTRICTED` and quota errors are different.
+- **Quota counts only active projects** — Archived projects do not count. Before concluding the user is at their limit, confirm with `GET /v1/user`.
+- **Temp project expiry** — After `POST /v1/projects/temp`, the user has 15 minutes to claim. Offer the claim step immediately, do not wait for the user to ask.
+- **OTP key is shown only once** — Store it as `LITEHOST_API_KEY` immediately after the verify response. It does not appear in the dashboard.
+
+---
+
+## Verification
+
+After a successful deployment, confirm success by:
+
+1. Returning the live URL to the user and asking them to open it.
+2. Confirming the `projectId` — the user will need it for future updates.
+3. For claimed temp projects, confirming the new `expiresAt` (null = permanent on paid plans).
+
+If the URL is not loading, check that the project `status` is `public` (not `private` or `expired`) via `GET /v1/projects/{projectId}`.
