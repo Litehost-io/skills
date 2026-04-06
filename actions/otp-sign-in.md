@@ -44,10 +44,16 @@ curl -X POST https://connect.litehost.io/v1/auth/otp/request \
 
 The response is identical whether or not the email has an existing account (prevents enumeration).
 
-### Rate limits
+### Rate limits on code requests
 
 - 3 requests per email per hour
 - 10 requests per IP per hour
+
+The window resets 1 hour after the **first** request in that window, not after each request.
+
+**IMPORTANT — request a code only once per sign-in attempt.** Do NOT call this endpoint repeatedly if the user hasn't entered a code yet. If the user says they didn't receive the email, ask them to check spam before requesting another code. Only request a new code if the previous one expired (10-min TTL) or was confirmed invalid by a 401 from verify.
+
+There is no rate limit on the verify step (`POST /v1/auth/otp/verify`) — retrying verification is safe.
 
 After requesting, tell the user: "A 6-digit code was sent to your email. Please enter it here."
 
@@ -111,7 +117,7 @@ OTP-generated keys are valid for **7 days**. When the key expires:
 | Step | Status | Action |
 |---|---|---|
 | Request | 400 | Email missing or invalid format. Ask user to provide a valid email. |
-| Request | 429 | Rate limited. Wait and retry later. Tell the user. |
+| Request | 429 | Rate limit hit (3/email/hour or 10/IP/hour). DO NOT retry immediately. Tell the user: "Too many code requests. Please wait up to an hour before trying again." |
 | Verify | 400 | Email or code missing/malformed. Check inputs. |
 | Verify | 401 | Code invalid, expired (10 min TTL), or already used. Request a new code via Step 1. |
 | Verify | 500 | Server error. Safe to retry the full OTP flow. |
