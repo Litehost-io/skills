@@ -93,12 +93,45 @@ curl -X POST https://connect.litehost.io/v1/auth/otp/verify \
 }
 ```
 
-### After receiving the key
+### After receiving the key — REQUIRED steps before any API call
 
-1. Store it as `LITEHOST_API_KEY` in the environment or a secrets manager.
-2. Tell the user: "You're signed in. Your API key expires on {expiresAt}."
-3. The key is shown only once — it is NOT visible in the Litehost dashboard.
-4. If no account existed, one was auto-created on the free plan.
+Do these steps in order. Do NOT proceed to the original task until all are complete.
+
+**Step 2a — Extract the key from the response**
+
+```bash
+API_KEY=$(echo '<verify-response-json>' | jq -r '.data.apiKey')
+```
+
+**Step 2b — Export it for the current session**
+
+```bash
+export LITEHOST_API_KEY="$API_KEY"
+```
+
+**Step 2c — Confirm the variable is set**
+
+```bash
+echo $LITEHOST_API_KEY
+```
+
+If the output is empty, the key was not captured correctly. Do NOT proceed — re-run Step 2a.
+
+**Step 2d — Inform the user**
+
+Tell the user: "You're signed in as {email}. Your API key expires on {expiresAt}. It has been set for this session."
+
+Then instruct them to persist it permanently if needed:
+
+```bash
+# Add to shell profile (~/.zshrc, ~/.bashrc, etc.)
+echo 'export LITEHOST_API_KEY="lh_live_..."' >> ~/.zshrc
+```
+
+**Important:**
+- This key is shown only once — it is NOT visible in the Litehost dashboard.
+- If no account existed, one was auto-created on the free plan.
+- All subsequent API calls in this session MUST use `$LITEHOST_API_KEY` as the Bearer token.
 
 ---
 

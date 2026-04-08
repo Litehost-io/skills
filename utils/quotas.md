@@ -1,16 +1,11 @@
 # Quota Handling
 
-Litehost enforces two limits based on the user's plan tier:
+ALWAYS call `GET /v1/user` and check both limits before creating or restoring a project:
 
-- **Project count** — maximum number of active (non-archived) projects
-- **Storage** — maximum total bytes across active projects
+- `data.quota.projects` — active (non-archived) project count vs limit
+- `data.quota.storage` — bytes used by active projects vs limit
 
-Archived projects do NOT count toward either limit.
-
-## Check Quota
-
-Call `GET /v1/user` and read `data.quota.projects` and `data.quota.storage`.
-If `unlimited` is `true` for a resource, skip the check for that resource.
+If `unlimited` is `true` for a resource, skip that check. Archived projects do NOT count toward either limit.
 
 ## When a Limit Is Reached
 

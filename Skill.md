@@ -135,12 +135,12 @@ Read `utils/errors.md` for the complete error reference and required agent actio
 
 ## Pitfalls
 
-- **OTP rate limit** — Do NOT request a new OTP code just because the user is slow. Request once, ask user to check spam if not received, only re-request after 10 min expiry or a 401 from verify. See `actions/otp-sign-in.md`.
+- **OTP code budget is 3 per hour — treat each request as precious.** The user gets at most 3 code requests per email per hour. Once exhausted, they are locked out for up to an hour. NEVER request a code more than once per sign-in attempt. If the user hasn't received it: ask them to check spam, wait, then try entering the code. Only request a new code if the previous one is confirmed expired (10 min TTL) or rejected with 401 from verify. See `actions/otp-sign-in.md`.
+- **OTP key MUST be exported before any API call.** After verify succeeds, immediately run `export LITEHOST_API_KEY="<key>"` and confirm the variable is set before proceeding. Do NOT use the key inline in a single curl and then continue — subsequent requests will fail silently with 401 because the variable was never set. See the "After receiving the key" steps in `actions/otp-sign-in.md`.
 - **ZIP with multiple HTML files** — Will always fail without `zipIndexHtmlPath`. Try `index.html` and `dist/index.html` first before asking the user.
 - **Free-tier 403** — Many endpoints silently require a paid plan. Check `utils/errors.md` before assuming a 403 is a quota issue; `FREE_TIER_RESTRICTED` and quota errors are different.
 - **Quota counts only active projects** — Archived projects do not count. Before concluding the user is at their limit, confirm with `GET /v1/user`.
 - **Temp project expiry** — After `POST /v1/projects/temp`, the user has 15 minutes to claim. Offer the claim step immediately, do not wait for the user to ask.
-- **OTP key is shown only once** — Store it as `LITEHOST_API_KEY` immediately after the verify response. It does not appear in the dashboard.
 
 ---
 
