@@ -5,7 +5,9 @@ Agent skill for deploying and managing projects on [litehost.io](https://litehos
 ## What's inside
 
 ```
-Skill.md                ← Entry point: routing table, auth gate, quota gate
+SKILL.md                ← Entry point: pick the path (no key / signed in / sign in once), routing
+scripts/
+  litehost.sh           ← Keeps the API key in a file between commands; sign-in, temp upload, api calls
 actions/
   otp-sign-in.md        ← POST /v1/auth/otp/request + /verify  (keyless auth)
   temp-project.md       ← POST /v1/projects/temp + /claim       (no auth needed)
@@ -29,18 +31,21 @@ utils/
 
 ## Prerequisites
 
-You need an API key. Two ways to get one:
+None to publish: without a key the skill uploads with `POST /v1/projects/temp` and gives you a
+`claimUrl` to keep the project from your browser (Google or email sign-in).
 
-- **Dashboard** — generate a permanent key at [litehost.io/dashboard → Integrations](https://litehost.io/dashboard).
-- **OTP sign-in** — the skill can authenticate you via email code, no dashboard needed. See `actions/otp-sign-in.md`.
-
-If you already have a key, expose it as an environment variable:
+To let the agent manage your projects, it signs you in **once** with an email code and saves the
+key to `~/.config/litehost/credentials.json` (permissions 600). The key renews while in use, so you
+are not asked for a code again. You can also provide a permanent key from
+[litehost.io/dashboard → Integrations](https://litehost.io/dashboard):
 
 ```bash
+scripts/litehost.sh save-key lh_live_...
+# or, in environments that keep env vars between commands:
 export LITEHOST_API_KEY="lh_live_..."
 ```
 
-No key at all? The skill can still do instant uploads via `POST /v1/projects/temp` (no auth required, 15-min expiry).
+Agents also get a short guide at https://connect.litehost.io/llms.txt.
 
 ---
 
@@ -75,7 +80,7 @@ Open your project's `CLAUDE.md` and add the following snippet yourself:
 ## Skills
 
 When the user asks to deploy, host, publish, or manage a project on Litehost,
-read and follow the skill at ~/.claude/skills/litehost-connect/Skill.md.
+read and follow the skill at ~/.claude/skills/litehost-connect/SKILL.md.
 ```
 
 ### Cursor
