@@ -1,14 +1,15 @@
 # Temporary Project
 
-Upload files and get a live URL instantly — no API key required. The project expires in 15 minutes unless claimed.
+Upload files and get a live URL instantly — no API key, no sign-in, no code. The project expires in
+15 minutes unless the user keeps it with `claimUrl`.
 
 ## When to use
 
-- The user wants the fastest path to a live URL with zero setup
-- The user is not yet authenticated and wants to try before signing in
-- Quick previews or one-off file sharing
+- There is no saved key (`scripts/litehost.sh session` returns `NO_SAVED_KEY`) — this is the
+  default path, do not start a sign-in first
+- The user wants a link fast, a preview, or a one-off share
 
-For permanent projects, use `create-project.md` instead (requires auth).
+If a key is saved, use `create-project.md` instead.
 
 ---
 
@@ -38,8 +39,14 @@ No authentication required.
 ### Example
 
 ```bash
+scripts/litehost.sh temp index.html style.css
+```
+
+Equivalent curl:
+
+```bash
 curl -X POST https://connect.litehost.io/v1/projects/temp \
-  -F "files=@index.html"
+  -F "files=@index.html" -F "files=@style.css"
 ```
 
 ### Response (200)
@@ -52,19 +59,26 @@ curl -X POST https://connect.litehost.io/v1/projects/temp \
     "slug": "blue-fox-42",
     "url": "https://blue-fox-42.litepage.site",
     "claimToken": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+    "claimUrl": "https://litehost.io/claim/a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
     "expiresAt": "2026-04-03T01:30:00.000Z"
   }
 }
 ```
 
-After a successful upload:
-1. Return the `url` to the user immediately.
-2. Tell them: "This link expires in 15 minutes. Want to keep it permanently?"
-3. If yes, proceed to claim (below). This requires authentication — if the user has no API key, run the OTP flow in `otp-sign-in.md` first.
+After a successful upload, tell the user right away:
+
+> Your link is live: {url}
+> It lasts 15 minutes. To keep it, open {claimUrl} and sign in (Google or email) — it moves to your
+> Litehost account.
+
+That is all. Do not start a sign-in yourself to claim it: the user claims it in the browser.
 
 ---
 
-## Claim Temporary Project
+## Claim Temporary Project (only if a key is already saved)
+
+If `scripts/litehost.sh session` succeeds, you can claim it for the user instead of sending
+`claimUrl`. Never sign in just to claim — `claimUrl` does that without a code.
 
 ```
 POST /v1/projects/claim/{claimToken}
@@ -74,7 +88,7 @@ Requires authentication (Bearer token).
 
 Permanently transfers the temp project to the user's account.
 
-- **Free plan** — expiry extended to 7 days from claim time.
+- **Free plan** — expiry extended to 7 days from claim time (a Pro trial keeps it permanent).
 - **Paid plans** — expiry removed; project becomes permanent.
 
 ### Pre-flight
@@ -84,8 +98,7 @@ Check quota via `GET /v1/user` before claiming. The API rejects with 403 if proj
 ### Example
 
 ```bash
-curl -X POST https://connect.litehost.io/v1/projects/claim/{claimToken} \
-  -H "Authorization: Bearer $LITEHOST_API_KEY"
+scripts/litehost.sh api POST /v1/projects/claim/{claimToken}
 ```
 
 ### Response (200)
@@ -109,9 +122,9 @@ curl -X POST https://connect.litehost.io/v1/projects/claim/{claimToken} \
 | Status | Code | Action |
 |---|---|---|
 | 400 | `ZIP_MULTIPLE_HTML` | Present `htmlPaths` to user, retry with `zipIndexHtmlPath`. |
-| 401 | — | Follow `utils/auth.md`. |
+| 401 | `API_KEY_*` | Follow `utils/auth.md`. Or just give the user `claimUrl`. |
 | 403 | `PROJECT_LIMIT_REACHED` | Follow `utils/quotas.md`. |
 | 403 | `STORAGE_LIMIT_REACHED` | Follow `utils/quotas.md`. |
 | 404 | — | Claim token not found or expired. The temp project is gone. |
 | 409 | `ALREADY_CLAIMED` | Project was already claimed. No action needed. |
-| 429 | — | Rate limited. Wait and retry. |
+| 429 | `RATE_LIMITED` | Wait `retryAfterSeconds` (5 anonymous uploads per hour per IP). |

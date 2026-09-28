@@ -1,156 +1,100 @@
-# OTP Sign-In
+# Sign In (email code)
 
-Authenticate a user via email OTP — no dashboard or browser required. Ideal for CLI tools, desktop apps, and AI agents.
+Signs the user in without a browser and saves an API key for every later session. Creates a
+free account (with a 7-day Pro trial) if the email is new.
 
-This flow either signs in an existing user or auto-creates a free-tier account.
+## Before you start
 
-## When to use
-
-- The user has no API key and no `LITEHOST_API_KEY` environment variable
-- The agent needs to authenticate the user without opening a browser
-- A previously issued OTP key has expired (7-day TTL)
-
-DO NOT use this if the user already has a valid API key. Use the key directly.
+- Run `scripts/litehost.sh session`. If it succeeds, the user is already signed in: **stop here**.
+- Only sign in when the user wants you to manage their projects. To just publish something, use
+  `actions/temp-project.md` — it needs no sign-in.
+- Ask for the user's email if you don't know it.
 
 ---
 
-## Step 1 — Request OTP code
+## Step 1 — Send the code (once)
 
+```bash
+scripts/litehost.sh request-code you@example.com
 ```
-POST /v1/auth/otp/request
-Content-Type: application/json
-```
 
-No authentication required.
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| email | string | yes | The user's email address. |
+Equivalent curl:
 
 ```bash
 curl -X POST https://connect.litehost.io/v1/auth/otp/request \
   -H "Content-Type: application/json" \
-  -d '{"email": "you@example.com"}'
+  -d '{"email":"you@example.com"}'
 ```
 
-### Response (200)
+Response:
 
 ```json
 {
   "status": "success",
-  "message": "Verification code sent. Check your email."
+  "nextStep": "Ask the user for the 6-digit code ... Do not call this endpoint again while waiting for the user.",
+  "data": { "sent": true, "expiresAt": "2026-09-28T12:10:00.000Z", "resendAvailableInSeconds": 60 }
 }
 ```
 
-The response is identical whether or not the email has an existing account (prevents enumeration).
+If a code is already open (for example you called this twice), nothing is sent and you get
+`"codeAlreadySent": true`. That is fine: the code in the user's inbox is still valid.
 
-### Rate limits on code requests
+Then tell the user: **"I sent a 6-digit code to {email}. Please paste it here."** and wait.
 
-- 3 requests per email per hour
-- 10 requests per IP per hour
-
-The window resets 1 hour after the **first** request in that window, not after each request.
-
-**IMPORTANT — request a code only once per sign-in attempt.** Do NOT call this endpoint repeatedly if the user hasn't entered a code yet. If the user says they didn't receive the email, ask them to check spam before requesting another code. Only request a new code if the previous one expired (10-min TTL) or was confirmed invalid by a 401 from verify.
-
-There is no rate limit on the verify step (`POST /v1/auth/otp/verify`) — retrying verification is safe.
-
-After requesting, tell the user: "A 6-digit code was sent to your email. Please enter it here."
+Do **not** call request-code again while you wait. If the user says no email arrived:
+1. Ask them to check spam and search for "Litehost sign-in code".
+2. If it is still missing, resend the same code (allowed once a minute):
+   `scripts/litehost.sh request-code you@example.com --resend`
 
 ---
 
-## Step 2 — Verify code and get API key
+## Step 2 — Verify and save the key
 
+```bash
+scripts/litehost.sh verify you@example.com 482931
 ```
-POST /v1/auth/otp/verify
-Content-Type: application/json
+
+On success the helper saves the key to `~/.config/litehost/credentials.json` (permissions 600)
+and prints it masked:
+
+```json
+{"status":"success","email":"you@example.com","apiKey":"lh_live_a1b2…9f0e","savedTo":"/home/you/.config/litehost/credentials.json","expiresAt":"2026-12-27T12:00:00.000Z","note":"Key saved; it renews while in use. Do not sign in again."}
 ```
 
-No authentication required.
+Tell the user: "You're signed in as {email}. I saved the key in {savedTo}, so you won't need a code
+next time."
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| email | string | yes | Same email used in Step 1. |
-| code | string | yes | The 6-digit code from the email. Must be exactly 6 digits. |
+### Without the helper
 
 ```bash
 curl -X POST https://connect.litehost.io/v1/auth/otp/verify \
   -H "Content-Type: application/json" \
-  -d '{"email": "you@example.com", "code": "482931"}'
+  -d '{"email":"you@example.com","code":"482931"}'
 ```
 
-### Response (200)
+Take `data.apiKey` and store it where it survives this session, in this order of preference:
+1. `~/.config/litehost/credentials.json` as `{"apiKey":"lh_live_…","email":"…"}` with `chmod 600`
+2. The agent's secret store, as `LITEHOST_API_KEY`
+3. No storage at all: ask the user to keep the key and paste it next time
 
-```json
-{
-  "status": "success",
-  "data": {
-    "email": "you@example.com",
-    "apiKey": "lh_live_a1b2c3d4e5f6...",
-    "expiresAt": "2026-04-09T14:23:00.000Z",
-    "message": "Account ready. This API key expires in 7 days. Use it as your Bearer token — it is shown only once."
-  }
-}
-```
-
-### After receiving the key — REQUIRED steps before any API call
-
-Do these steps in order. Do NOT proceed to the original task until all are complete.
-
-**Step 2a — Extract the key from the response**
-
-```bash
-API_KEY=$(echo '<verify-response-json>' | jq -r '.data.apiKey')
-```
-
-**Step 2b — Export it for the current session**
-
-```bash
-export LITEHOST_API_KEY="$API_KEY"
-```
-
-**Step 2c — Confirm the variable is set**
-
-```bash
-echo $LITEHOST_API_KEY
-```
-
-If the output is empty, the key was not captured correctly. Do NOT proceed — re-run Step 2a.
-
-**Step 2d — Inform the user**
-
-Tell the user: "You're signed in as {email}. Your API key expires on {expiresAt}. It has been set for this session."
-
-Then instruct them to persist it permanently if needed:
-
-```bash
-# Add to shell profile (~/.zshrc, ~/.bashrc, etc.)
-echo 'export LITEHOST_API_KEY="lh_live_..."' >> ~/.zshrc
-```
-
-**Important:**
-- This key is shown only once — it is NOT visible in the Litehost dashboard.
-- If no account existed, one was auto-created on the free plan.
-- All subsequent API calls in this session MUST use `$LITEHOST_API_KEY` as the Bearer token.
+Never rely on `export` alone: the next command usually runs in a new shell without it.
+Never repeat the full key back to the user once saved.
 
 ---
 
-## Key Expiry
+## Errors
 
-OTP-generated keys are valid for **7 days**. When the key expires:
-
-1. Any request returns `401 Unauthorized`.
-2. Re-run the full OTP flow (Step 1 + Step 2) to get a fresh key.
-3. The account is NOT re-created — only a new key is issued.
-
----
-
-## Error Handling
-
-| Step | Status | Action |
+| Code | Meaning | Do this |
 |---|---|---|
-| Request | 400 | Email missing or invalid format. Ask user to provide a valid email. |
-| Request | 429 | Rate limit hit (3/email/hour or 10/IP/hour). DO NOT retry immediately. Tell the user: "Too many code requests. Please wait up to an hour before trying again." |
-| Verify | 400 | Email or code missing/malformed. Check inputs. |
-| Verify | 401 | Code invalid, expired (10 min TTL), or already used. Request a new code via Step 1. |
-| Verify | 500 | Server error. Safe to retry the full OTP flow. |
+| `OTP_INVALID` | Wrong code (typo, old email). `attemptsLeft` says how many tries remain. | Ask the user to re-check the latest Litehost email. **Do not request a new code** — the current one is still valid. |
+| `OTP_EXPIRED` | No open code: it expired (10 min) or was used. | Request a new code once (Step 1), then ask the user for it. |
+| `OTP_TOO_MANY_ATTEMPTS` | 5 wrong codes; the code was cancelled. | Request a new code once and ask the user to copy it carefully. |
+| `RATE_LIMITED` | Too many emails (5 per address per hour). | If a code was already sent, verify that one. Otherwise wait `retryAfterSeconds`; meanwhile you can publish with `actions/temp-project.md`. |
+| `INVALID_REQUEST` | Email or code malformed. | Fix the input (6 digits, no spaces) and retry. |
+| `SERVER_ERROR` | Account setup failed. | Wait a minute, then request a new code once. |
+
+## Key lifetime
+
+Keys from this flow renew automatically every time they are used, and expire only after 90 days
+without use. If a call ever returns `API_KEY_EXPIRED` or `API_KEY_INVALID`, run
+`scripts/litehost.sh forget` and sign in again once.

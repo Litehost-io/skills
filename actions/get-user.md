@@ -23,17 +23,17 @@ curl https://connect.litehost.io/v1/user \
   "data": {
     "email": "user@example.com",
     "plan": {
-      "tier": "creator",
+      "tier": "pro",
       "limits": {
-        "maxProjects": 10,
-        "maxStorageBytes": 2147483648,
+        "maxProjects": 25,
+        "maxStorageBytes": 5368709120,
         "maxFilesPerProject": 200,
         "maxVisitorsPerMonth": 100000
       }
     },
     "quota": {
-      "projects": { "used": 3, "limit": 10, "unlimited": false },
-      "storage": { "usedBytes": 52428800, "limitBytes": 2147483648, "unlimited": false }
+      "projects": { "used": 3, "limit": 25, "unlimited": false },
+      "storage": { "usedBytes": 52428800, "limitBytes": 5368709120, "unlimited": false }
     }
   }
 }
@@ -43,7 +43,7 @@ curl https://connect.litehost.io/v1/user \
 
 | Field | Meaning |
 |---|---|
-| `plan.tier` | One of: `free`, `starter`, `creator`, `pro`, `scale`. |
+| `plan.tier` | One of: `free`, `starter`, `pro`, `agency` (`scale` only on older accounts). New accounts are on a 7-day Pro trial. |
 | `quota.projects.used` | Active (non-archived) project count. |
 | `quota.projects.limit` | Max allowed. `-1` means unlimited. |
 | `quota.storage.usedBytes` | Bytes used by active projects only. |
