@@ -25,6 +25,7 @@ All error responses follow this shape:
 | 401 | `OTP_EXPIRED` | No open code. Request a new one, once. |
 | 429 | `OTP_TOO_MANY_ATTEMPTS` | 5 wrong codes. Request a new one, once. |
 | 429 | `RATE_LIMITED` | Wait `retryAfterSeconds` (also in `Retry-After`). If a code was already sent, verify it instead. |
+| — | `NETWORK_BLOCKED` (helper only) | This environment cannot reach connect.litehost.io. Follow Step 0 in `SKILL.md`: stop, point the user to the Litehost connector. Do not sign in. |
 | — | `NO_SAVED_KEY` (helper only) | No key saved. Publish with `actions/temp-project.md`, or sign in once if the user wants you to manage projects. |
 
 ## Error Reference
@@ -33,6 +34,7 @@ All error responses follow this shape:
 |---|---|---|---|
 | 400 | `ZIP_MULTIPLE_HTML` | ZIP contains multiple HTML files and no `zipIndexHtmlPath` was provided. | Read the `htmlPaths` array from the response. Present the paths to the user. Ask which is the homepage. Retry with `zipIndexHtmlPath` set to their choice. |
 | 401 | `API_KEY_*`, `OTP_*` | See the table above. | Follow `utils/auth.md`. |
+| 403 | `FEATURE_LOCKED` | This feature (e.g. link opens) needs a paid plan. The key is fine. | Same as `FREE_TIER_RESTRICTED`. |
 | 403 | `FREE_TIER_RESTRICTED` | Endpoint requires a paid plan (starter or higher). The key is fine. | Tell the user: "This needs a paid plan ({requiredTier} or higher): https://litehost.io/dashboard?upgrade=plans". DO NOT retry and DO NOT sign in again. |
 | 403 | `PROJECT_LIMIT_REACHED` | Active project count equals the plan limit. | Follow `utils/quotas.md`. |
 | 403 | `STORAGE_LIMIT_REACHED` | Total storage of active projects equals the plan limit. | Follow `utils/quotas.md`. |
@@ -48,6 +50,7 @@ These endpoints return `403 FREE_TIER_RESTRICTED` for free-plan users:
 - PUT `/v1/projects/{id}` (push new version)
 - PATCH `/v1/projects/{id}` (update settings)
 - GET `/v1/projects/{id}/status` (deployment history)
+- GET `/v1/projects/{id}/analytics` (link opens)
 - POST `/v1/projects/{id}/archive`
 - POST `/v1/projects/{id}/unarchive`
 - GET `/v1/domains`, GET `/v1/domains/{id}`

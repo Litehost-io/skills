@@ -42,6 +42,28 @@ save_key() { # save_key KEY EMAIL
 
 mask() { printf '%s…%s' "${1:0:12}" "${1: -4}"; }
 
+# Every call goes through lh_curl: it tags requests as coming from this skill
+# and turns "this environment cannot reach Litehost" (sandboxed chats with a
+# domain allowlist, no network) into one clear code instead of a raw curl error.
+lh_curl() {
+  local out rc
+  set +e
+  out="$(curl -sS -H "X-Litehost-Client: skill" "$@" 2>&1)"
+  rc=$?
+  set -e
+  case "$out" in
+    \{*) printf '%s\n' "$out"; return 0 ;;
+  esac
+  local detail
+  detail="$(printf '%s' "$out" | head -c 200 | tr '"\\\n\r' "'   ")"
+  if [ "$rc" -ne 0 ]; then
+    printf '{"status":"error","code":"NETWORK_BLOCKED","error":"This environment cannot reach %s (%s)","nextStep":"Stop and do not sign in. Tell the user this chat cannot reach Litehost and suggest the Litehost connector: Settings > Connectors > Add custom connector > https://connect.litehost.io/mcp. See Step 0 in SKILL.md."}\n' "$BASE" "$detail"
+  else
+    printf '{"status":"error","code":"UNEXPECTED_RESPONSE","error":"Litehost answered with something that is not JSON: %s","nextStep":"Wait a minute and try once more. If it happens again, tell the user Litehost may be down."}\n' "$detail"
+  fi
+  return 1
+}
+
 cmd="${1:-help}"
 shift || true
 
@@ -49,27 +71,27 @@ case "$cmd" in
   session)
     key="$(saved_key)"
     if [ -z "$key" ]; then
+      # Check Litehost is reachable first, so a blocked sandbox is caught before any sign-in.
+      reach="$(lh_curl "$BASE/v1")" || { printf '%s\n' "$reach"; exit 0; }
       echo '{"status":"error","code":"NO_SAVED_KEY","nextStep":"No key saved. To publish, use: litehost.sh temp FILE. Sign in only if the user wants you to manage their projects."}'
       exit 0
     fi
-    curl -sS "$BASE/v1/auth/session" -H "Authorization: Bearer $key"
-    echo
+    lh_curl "$BASE/v1/auth/session" -H "Authorization: Bearer $key"
     ;;
 
   request-code)
     email="${1:?email required}"
     resend=false
     [ "${2:-}" = "--resend" ] && resend=true
-    curl -sS -X POST "$BASE/v1/auth/otp/request" -H "Content-Type: application/json" \
+    lh_curl -X POST "$BASE/v1/auth/otp/request" -H "Content-Type: application/json" \
       -d "{\"email\":\"$email\",\"resend\":$resend}"
-    echo
     ;;
 
   verify)
     email="${1:?email required}"
     code="${2:?code required}"
-    res="$(curl -sS -X POST "$BASE/v1/auth/otp/verify" -H "Content-Type: application/json" \
-      -d "{\"email\":\"$email\",\"code\":\"$code\"}")"
+    res="$(lh_curl -X POST "$BASE/v1/auth/otp/verify" -H "Content-Type: application/json" \
+      -d "{\"email\":\"$email\",\"code\":\"$code\"}")" || { printf '%s\n' "$res"; exit 1; }
     key="$(printf '%s' "$res" | json_field apiKey)"
     if [ -n "$key" ]; then
       save_key "$key" "$email"
@@ -95,8 +117,7 @@ case "$cmd" in
     [ "$#" -ge 1 ] || { echo "usage: litehost.sh temp FILE [FILE...]" >&2; exit 2; }
     args=()
     for f in "$@"; do args+=(-F "files=@$f"); done
-    curl -sS -X POST "$BASE/v1/projects/temp" "${args[@]}"
-    echo
+    lh_curl -X POST "$BASE/v1/projects/temp" "${args[@]}"
     ;;
 
   api)
@@ -108,8 +129,7 @@ case "$cmd" in
       echo '{"status":"error","code":"NO_SAVED_KEY","nextStep":"No key saved. Run: litehost.sh session. Sign in only if the user wants you to manage their projects."}'
       exit 1
     fi
-    curl -sS -X "$method" "$BASE$path" -H "Authorization: Bearer $key" "$@"
-    echo
+    lh_curl -X "$method" "$BASE$path" -H "Authorization: Bearer $key" "$@"
     ;;
 
   *)

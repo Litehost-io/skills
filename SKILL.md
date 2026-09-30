@@ -1,6 +1,6 @@
 ---
 name: litehost-connect
-version: 4.0.0
+version: 4.1.0
 author: Litehost
 license: MIT
 description: >
@@ -28,6 +28,26 @@ Base URL: `https://connect.litehost.io` · Agent guide: https://connect.litehost
 
 Helper: `scripts/litehost.sh` (in this skill's folder). Use it whenever you can run bash: it keeps
 the API key in a file between commands and never prints it.
+
+---
+
+## Step 0 — Can this environment reach Litehost?
+
+This skill runs `curl` against `https://connect.litehost.io`. That works in Claude Code, Cursor and
+other agents on the user's own computer. In a sandbox (the claude.ai or Claude desktop chat, ChatGPT,
+hosted agents) outbound traffic is often limited to a list of allowed domains.
+
+If `scripts/litehost.sh session` returns `NETWORK_BLOCKED`, or any call fails with a proxy error,
+`host_not_allowed`, `403 Forbidden` before reaching Litehost, or "Could not resolve host":
+
+- Stop. Do not retry, do not sign in, and do not try other URLs.
+- Tell the user, in plain words: "This chat can't reach Litehost. The easiest fix is the Litehost
+  connector: in Claude go to Settings → Connectors → Add custom connector and paste
+  `https://connect.litehost.io/mcp`, then sign in once. It works in any chat, with nothing else to
+  set up."
+- Only if they want to keep using this skill: they add `connect.litehost.io` to the allowed domains
+  in their code execution settings and start a **new chat** (the setting does not apply to a chat
+  that is already open).
 
 ---
 
@@ -74,6 +94,7 @@ becomes `scripts/litehost.sh api METHOD /PATH ARGS` (same `-F` / `-d` / `-H "Con
 | "rename", "change slug", "make private", "set password", "set expiry", "SEO" | `actions/update-project.md` |
 | "list my projects", "what do I have hosted" | `actions/list-projects.md` |
 | "project details", "project status" | `actions/get-project.md` |
+| "did my client open it?", "who opened the link" | `actions/link-opens.md` |
 | "deploy history", "versions" | `actions/deployment-history.md` |
 | "delete project" | `actions/delete-project.md` |
 | "archive", "free up a slot" | `actions/archive-project.md` |
@@ -91,7 +112,8 @@ quotas (`utils/quotas.md`).
 
 New accounts get Pro free for 7 days. On Free, the API allows: listing, viewing, creating and
 deleting projects, claiming temp projects, and `GET /v1/user`. Pushing new versions, changing
-settings, archive/unarchive, domains and workspaces need a paid plan (`FREE_TIER_RESTRICTED`).
+settings, link opens, archive/unarchive, domains and workspaces need a paid plan
+(`FREE_TIER_RESTRICTED` or `FEATURE_LOCKED`).
 That error means the key is fine: tell the user and link https://litehost.io/dashboard?upgrade=plans.
 Do not sign in again.
 
@@ -131,3 +153,5 @@ Every error response has `code`, `error` and `nextStep`. Follow `nextStep`. Full
 - Local development servers
 - DNS outside Litehost custom domains
 - Billing: send the user to https://litehost.io/dashboard
+- A chat that cannot reach connect.litehost.io (see Step 0): point the user to the Litehost
+  connector (`https://connect.litehost.io/mcp`) instead
