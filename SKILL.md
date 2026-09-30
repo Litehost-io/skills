@@ -1,13 +1,13 @@
 ---
 name: litehost-connect
-version: 4.1.0
+version: 4.2.0
 author: Litehost
 license: MIT
 description: >
   Publish files and websites as shareable links on litehost.io and manage them through the
   Connect API. Use when the user asks to deploy, host, publish, share, upload, update, list,
-  delete, archive or manage a site, file, project or custom domain on Litehost, or to check
-  their Litehost plan or quota.
+  delete, archive or manage a site, file, project or custom domain on Litehost, send work to a
+  client as one link, get a QR code for a link, or check their Litehost plan or quota.
 user-invocable: true
 argument-hint: "[file-or-folder]"
 metadata:
@@ -94,6 +94,7 @@ becomes `scripts/litehost.sh api METHOD /PATH ARGS` (same `-F` / `-d` / `-H "Con
 | "rename", "change slug", "make private", "set password", "set expiry", "SEO" | `actions/update-project.md` |
 | "list my projects", "what do I have hosted" | `actions/list-projects.md` |
 | "project details", "project status" | `actions/get-project.md` |
+| "QR code", "print it on the menu / flyer" | `actions/qr-code.md` |
 | "did my client open it?", "who opened the link" | `actions/link-opens.md` |
 | "deploy history", "versions" | `actions/deployment-history.md` |
 | "delete project" | `actions/delete-project.md` |
@@ -102,6 +103,11 @@ becomes `scripts/litehost.sh api METHOD /PATH ARGS` (same `-F` / `-d` / `-H "Con
 | "domains", "custom domain" | `actions/domains.md` |
 | "workspaces", "organize projects" | `actions/workspaces.md` |
 | "my plan", "quota", "how much space" | `actions/get-user.md` |
+
+When the user asks for changes to something already shared ("change the price", "send the new
+version"), update the same project with `actions/replace-project.md` instead of creating a new one:
+the link they already sent, and any printed QR code, keep working. Find it with
+`actions/list-projects.md`.
 
 Before creating, claiming or restoring a project while signed in, call `GET /v1/user` and check
 quotas (`utils/quotas.md`).
@@ -112,7 +118,7 @@ quotas (`utils/quotas.md`).
 
 New accounts get Pro free for 7 days. On Free, the API allows: listing, viewing, creating and
 deleting projects, claiming temp projects, and `GET /v1/user`. Pushing new versions, changing
-settings, link opens, archive/unarchive, domains and workspaces need a paid plan
+settings, QR codes, link opens, archive/unarchive, domains and workspaces need a paid plan
 (`FREE_TIER_RESTRICTED` or `FEATURE_LOCKED`).
 That error means the key is fine: tell the user and link https://litehost.io/dashboard?upgrade=plans.
 Do not sign in again.
