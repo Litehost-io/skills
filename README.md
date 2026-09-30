@@ -16,6 +16,7 @@ actions/
   update-project.md     ← PATCH /v1/projects/{id}               (change settings)
   list-projects.md      ← GET  /v1/projects
   get-project.md        ← GET  /v1/projects/{id}
+  link-opens.md         ← GET  /v1/projects/{id}/analytics      (did the client open it?)
   deployment-history.md ← GET  /v1/projects/{id}/status
   delete-project.md     ← DELETE /v1/projects/{id}
   archive-project.md    ← POST /v1/projects/{id}/archive
@@ -46,6 +47,28 @@ export LITEHOST_API_KEY="lh_live_..."
 ```
 
 Agents also get a short guide at https://connect.litehost.io/llms.txt.
+
+---
+
+## Where to use it
+
+| Where | Use |
+|---|---|
+| Claude Code, Cursor, Codex, other agents on your computer | This skill (`npx skills add litehost-io/skills`) |
+| Chat apps: claude.ai, the Claude desktop and mobile apps, ChatGPT, Meta Muse | The **Litehost connector**, not this skill |
+
+Chat apps run skills in a sandbox that can only reach a list of allowed domains, so this skill
+cannot talk to Litehost there unless you change settings and open a new chat. The connector runs on
+Litehost's side instead: nothing to install, nothing to allow.
+
+**Add the connector in Claude:** Settings → Connectors → Add custom connector → paste
+`https://connect.litehost.io/mcp` → sign in with Google or email. Then ask in any chat, e.g.
+"Share this PDF with my client" or "Make a page with my menu and give me a QR code".
+
+**If you still want the skill in claude.ai:** upload it in Settings → Capabilities (Skills), add
+`connect.litehost.io` to the domains code execution may reach, and start a **new chat**: the setting
+does not apply to a chat that is already open. If the domain is not allowed, the skill says so
+(`NETWORK_BLOCKED`) and points to the connector instead of failing with a raw error.
 
 ---
 
