@@ -17,6 +17,7 @@ actions/
   list-projects.md      ← GET  /v1/projects
   get-project.md        ← GET  /v1/projects/{id}
   link-opens.md         ← GET  /v1/projects/{id}/analytics      (did the client open it?)
+  qr-code.md            ← GET  /qr/{id}.png | .svg              (QR to print, no key needed)
   deployment-history.md ← GET  /v1/projects/{id}/status
   delete-project.md     ← DELETE /v1/projects/{id}
   archive-project.md    ← POST /v1/projects/{id}/archive
