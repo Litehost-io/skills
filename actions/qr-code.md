@@ -33,5 +33,5 @@ curl -fsS -o litehost-qr.png https://connect.litehost.io/qr/PROJECT_ID.png
 | 403 `QR codes need a paid plan.` | The owner is on Free | Tell the user and link https://litehost.io/dashboard?upgrade=plans |
 | 404 | Unknown, archived or expired project | Check the id with `actions/list-projects.md` |
 
-On Free, links also expire after 7 days, so a printed QR would stop working: say so before the user
-prints anything.
+On Free, a link nobody opens for 90 days is paused, and a printed QR would stop working with it:
+say so before the user prints anything.
