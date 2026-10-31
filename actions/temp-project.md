@@ -88,8 +88,8 @@ Requires authentication (Bearer token).
 
 Permanently transfers the temp project to the user's account.
 
-- **Free plan** — expiry extended to 7 days from claim time (a Pro trial keeps it permanent).
-- **Paid plans** — expiry removed; project becomes permanent.
+- The 15-minute expiry is removed on every plan, Free included.
+- On Free, the link stays online while it's opened at least once every 90 days.
 
 ### Pre-flight
 
@@ -115,7 +115,7 @@ scripts/litehost.sh api POST /v1/projects/claim/{claimToken}
 }
 ```
 
-`expiresAt` is `null` for paid plans (permanent).
+`expiresAt` is `null` after a claim.
 
 ### Error Handling
 
