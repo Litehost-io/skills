@@ -81,6 +81,15 @@ npx skills add litehost-io/skills
 
 This downloads the skill and registers it with your agent. Works with Claude Code, Cursor, and any compatible agent framework.
 
+OpenClaw:
+
+```bash
+clawhub install litehost-connect
+```
+
+The MCP connector is also listed in the [MCP Registry](https://registry.modelcontextprotocol.io) as
+`io.github.Litehost-io/litehost` (`mcp/server.json`).
+
 ---
 
 ## Manual Installation

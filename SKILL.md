@@ -15,6 +15,9 @@ metadata:
     tags: [Hosting, Deployment, Web, Static Sites, API]
     related_skills: []
     requires_tools: [terminal]
+  openclaw:
+    requires:
+      bins: [bash, curl]
 required_environment_variables:
   - name: LITEHOST_API_KEY
     prompt: "Your Litehost API key (format: lh_live_...). Optional."
